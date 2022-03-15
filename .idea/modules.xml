@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/SDis.iml" filepath="$PROJECT_DIR$/.idea/SDis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Lab02/exercise_java-sockets/socket.iml" filepath="$PROJECT_DIR$/Lab02/exercise_java-sockets/socket.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Lab02/exercise_java-sockets/client/socket-client.iml" filepath="$PROJECT_DIR$/Lab02/exercise_java-sockets/client/socket-client.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Lab02/exercise_java-sockets/server/socket-server.iml" filepath="$PROJECT_DIR$/Lab02/exercise_java-sockets/server/socket-server.iml" />
+    </modules>
+  </component>
+</project>
