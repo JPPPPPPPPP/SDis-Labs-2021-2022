@@ -4,9 +4,14 @@ pt\tecnico\grpc\BankingServiceGrpc$BankingServiceImplBase.class
 pt\tecnico\grpc\Banking$RegisterRequestOrBuilder.class
 pt\tecnico\grpc\BankingServiceGrpc$3.class
 pt\tecnico\grpc\Banking$ConsultResponse$1.class
+pt\tecnico\grpc\Banking$DepositRequest.class
 pt\tecnico\grpc\Banking$RegisterResponse.class
+pt\tecnico\grpc\Banking$DepositResponseOrBuilder.class
 pt\tecnico\grpc\BankingServiceGrpc$BankingServiceFileDescriptorSupplier.class
+pt\tecnico\grpc\Banking$DepositResponse$Builder.class
+pt\tecnico\grpc\Banking$DepositResponse.class
 pt\tecnico\grpc\Banking$ConsultResponseOrBuilder.class
+pt\tecnico\grpc\Banking$DepositResponse$1.class
 pt\tecnico\grpc\Banking$RegisterRequest$1.class
 pt\tecnico\grpc\Banking$RegisterRequest.class
 pt\tecnico\grpc\BankingServiceGrpc$BankingServiceFutureStub.class
@@ -25,5 +30,8 @@ pt\tecnico\grpc\Banking$RegisterRequest$Builder.class
 pt\tecnico\grpc\Banking$ConsultRequestOrBuilder.class
 pt\tecnico\grpc\BankingServiceGrpc$BankingServiceBaseDescriptorSupplier.class
 pt\tecnico\grpc\BankingServiceGrpc$MethodHandlers.class
+pt\tecnico\grpc\Banking$DepositRequest$1.class
+pt\tecnico\grpc\Banking$DepositRequest$Builder.class
 pt\tecnico\grpc\Banking$ConsultResponse$Builder.class
+pt\tecnico\grpc\Banking$DepositRequestOrBuilder.class
 pt\tecnico\grpc\BankingServiceGrpc$BankingServiceBlockingStub.class

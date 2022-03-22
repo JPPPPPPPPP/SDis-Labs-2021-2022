@@ -17,8 +17,17 @@ message ConsultResponse {
 	uint32 balance = 1;
 }
 
+message DepositRequest {
+	string client = 1;
+	uint32 amount = 2;
+}
+
+message DepositResponse {
+}
+
 service BankingService {
 	rpc register(RegisterRequest) returns (RegisterResponse);
 	rpc consult(ConsultRequest) returns (ConsultResponse);
+	rpc deposit(DepositRequest) returns (DepositResponse);
 }
 

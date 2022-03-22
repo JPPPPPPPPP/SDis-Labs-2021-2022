@@ -30,4 +30,22 @@ public class BankingServiceImpl extends BankingServiceGrpc.BankingServiceImplBas
 		responseObserver.onNext(ConsultResponse.newBuilder().setBalance(balance).build());
 		responseObserver.onCompleted();
 	}
+
+	@Override
+	public void deposit(DepositRequest request, StreamObserver responseObserver) {
+		if (bank.isClient(request.getClient()) == false) {
+			responseObserver.onError(INVALID_ARGUMENT.withDescription("Input has to be a valid user!").asRuntimeException());
+			return;
+		}
+
+		if (bank.isAmount(request.getAmount()) == false) {
+			responseObserver.onError(INVALID_ARGUMENT.withDescription("Input has to be a valid amount!").asRuntimeException());
+			return;
+		}
+
+		bank.deposit(request.getClient(),request.getAmount());
+
+		responseObserver.onNext(DepositResponse.getDefaultInstance());
+		responseObserver.onCompleted();
+	}
 }
