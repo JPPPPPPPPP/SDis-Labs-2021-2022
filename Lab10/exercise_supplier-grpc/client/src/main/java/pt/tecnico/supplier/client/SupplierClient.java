@@ -7,6 +7,8 @@ import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.supplier.grpc.ProductsRequest;
 import pt.tecnico.supplier.grpc.ProductsResponse;
 import pt.tecnico.supplier.grpc.SupplierGrpc;
+import pt.tecnico.supplier.grpc.SignedResponse;
+import pt.tecnico.supplier.grpc.Signature;
 
 public class SupplierClient {
 
@@ -20,6 +22,21 @@ public class SupplierClient {
 	private static void debug(String debugMessage) {
 		if (DEBUG_FLAG)
 			System.err.println(debugMessage);
+	}
+
+	public static SecretKeySpec readKey(String resourcePathName) throws Exception {
+		System.out.println("Reading key from resource " + resourcePathName + " ...");
+
+		InputStream fis = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePathName);
+		byte[] encoded = new byte[fis.available()];
+		fis.read(encoded);
+		fis.close();
+
+		System.out.println("Key:");
+		System.out.println(printHexBinary(encoded));
+		SecretKeySpec keySpec = new SecretKeySpec(encoded, "AES");
+
+		return keySpec;
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -59,7 +76,7 @@ public class SupplierClient {
 
 		// Make the call using the stub.
 		System.out.println("Remote call...");
-		ProductsResponse response = stub.listProducts(request);
+		SignedResponse response = stub.listProducts(request);
 
 		// Print response.
 		System.out.println("Received response:");

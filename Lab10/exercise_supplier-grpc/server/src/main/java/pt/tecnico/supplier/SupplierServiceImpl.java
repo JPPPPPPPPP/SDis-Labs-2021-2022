@@ -10,6 +10,14 @@ import pt.tecnico.supplier.grpc.Product;
 import pt.tecnico.supplier.grpc.ProductsRequest;
 import pt.tecnico.supplier.grpc.ProductsResponse;
 import pt.tecnico.supplier.grpc.SupplierGrpc;
+import pt.tecnico.supplier.grpc.SignedResponse;
+import pt.tecnico.supplier.grpc.Signature;
+
+import javax.crypto.spec.SecretKeySpec;
+
+import static javax.xml.bind.DatatypeConverter.printHexBinary;
+
+import java.io.InputStream;
 
 public class SupplierServiceImpl extends SupplierGrpc.SupplierImplBase {
 
@@ -48,8 +56,23 @@ public class SupplierServiceImpl extends SupplierGrpc.SupplierImplBase {
 		return productBuilder.build();
 	}
 
+	public static SecretKeySpec readKey(String resourcePathName) throws Exception {
+		System.out.println("Reading key from resource " + resourcePathName + " ...");
+
+		InputStream fis = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePathName);
+		byte[] encoded = new byte[fis.available()];
+		fis.read(encoded);
+		fis.close();
+
+		System.out.println("Key:");
+		System.out.println(printHexBinary(encoded));
+		SecretKeySpec keySpec = new SecretKeySpec(encoded, "AES");
+
+		return keySpec;
+	}
+
 	@Override
-	public void listProducts(ProductsRequest request, StreamObserver<ProductsResponse> responseObserver) {
+	public void listProducts(ProductsRequest request, StreamObserver<SignedResponse> responseObserver) {
 		debug("listProducts called");
 
 		debug("Received request:");
@@ -58,7 +81,7 @@ public class SupplierServiceImpl extends SupplierGrpc.SupplierImplBase {
 		byte[] requestBinary = request.toByteArray();
 		debug(String.format("%d bytes%n", requestBinary.length));
 
-		// build response
+		// build ProductsResponse
 		ProductsResponse.Builder responseBuilder = ProductsResponse.newBuilder();
 		responseBuilder.setSupplierIdentifier(supplier.getId());
 		for (String pid : supplier.getProductsIDs()) {
@@ -66,17 +89,30 @@ public class SupplierServiceImpl extends SupplierGrpc.SupplierImplBase {
 			Product product = buildProductFromProduct(p);
 			responseBuilder.addProduct(product);
 		}
-		ProductsResponse response = responseBuilder.build();
+		ProductsResponse prodResponse = responseBuilder.build();
 
+		//Build signature
+		Signature.Builder sigBuilder = Signature.newBuilder();
+		sigBuilder.setSignerId(supplier.getId());
+		sigBuilder.setValue(readKey(".")); //./secretkey if fucked
+		Signature sig = sigBuilder.build();
+
+		//Build SignedResponse
+		SignedResponse.Builder signedResponseBuilder = SignedResponse.newBuilder();
+		signedResponseBuilder.setResponse(prodResponse);
+		signedResponseBuilder.setSignature(sig);
+		SignedResponse sigResponse = signedResponseBuilder.Build();
+
+		//still refers to prodResponse
 		debug("Response to send:");
-		debug(response.toString());
+		debug(sigResponse.toString());
 		debug("in binary hexadecimals:");
-		byte[] responseBinary = response.toByteArray();
+		byte[] responseBinary = sigResponse.toByteArray();
 		debug(printHexBinary(responseBinary));
 		debug(String.format("%d bytes%n", responseBinary.length));
 
 		// send single response back
-		responseObserver.onNext(response);
+		responseObserver.onNext(sigResponse);
 		// complete call
 		responseObserver.onCompleted();
 	}
