@@ -1,5 +1,7 @@
 package pt.tecnico.supplier.domain;
 
+import pt.tecnico.supplier.grpc.*;
+
 /**
  * Product entity. Only the product quantity is mutable so its get/set methods
  * are synchronized.
@@ -13,6 +15,8 @@ public class Product {
 	private volatile int quantity;
 	/** Price of product */
 	private int price;
+	//score
+	private Score score = Score.FLAWED;
 
 	/** Create a new product */
 	public Product(String pid, String description, int quantity, int price) {
@@ -51,6 +55,7 @@ public class Product {
 		builder.append(", description=").append(description);
 		builder.append(", quantity=").append(quantity);
 		builder.append(", price=").append(price);
+		builder.append(", score=").append(score);
 		builder.append("]");
 		return builder.toString();
 	}

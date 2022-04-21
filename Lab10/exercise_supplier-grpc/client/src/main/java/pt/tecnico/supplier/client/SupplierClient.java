@@ -10,7 +10,21 @@ import pt.tecnico.supplier.grpc.SupplierGrpc;
 import pt.tecnico.supplier.grpc.SignedResponse;
 import pt.tecnico.supplier.grpc.Signature;
 
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.InputStream;
+
+import javax.crypto.*;
+import java.security.*;
+import java.util.Arrays;
+
 public class SupplierClient {
+
+	static String DIGEST_ALGO = "SHA-256";
+	static String MAC_ALGO = "HmacSHA256";
+	String SYM_ALGO = "AES";
+	static String SYM_CIPHER = "AES/CBC/PKCS5Padding";
+	static int SYM_IV_LEN = 16;
 
 	/**
 	 * Set flag to true to print debug messages. The flag can be set using the
@@ -41,7 +55,7 @@ public class SupplierClient {
 
 	public static void main(String[] args) throws Exception {
 		System.out.println(SupplierClient.class.getSimpleName() + " starting ...");
-
+		long previousCounter = -1;
 		// Receive and print arguments.
 		System.out.printf("Received %d arguments%n", args.length);
 		for (int i = 0; i < args.length; i++) {
@@ -78,6 +92,38 @@ public class SupplierClient {
 		System.out.println("Remote call...");
 		SignedResponse response = stub.listProducts(request);
 
+		SecretKeySpec keyspec = null;
+
+		byte[] prodBytes = response.getResponse().toByteArray();
+		byte[] sigValueBytes = response.getSignature().getValue().toByteArray();
+		byte[] newPlainBytes = new byte[70];
+		byte[] cypherDigest = new byte[69];
+		MessageDigest md = MessageDigest.getInstance(DIGEST_ALGO);
+		try {
+			keyspec = readKey("."); //./secretkey if fucked
+			Cipher cipher = Cipher.getInstance(SYM_CIPHER);
+			byte[] iv = new byte[SYM_IV_LEN];
+			IvParameterSpec ips = new IvParameterSpec(iv);
+			cipher.init(Cipher.DECRYPT_MODE, keyspec, ips);
+			newPlainBytes = cipher.doFinal(sigValueBytes);
+			md.update(prodBytes);
+			md.digest();
+		} catch (Exception e) {
+		  e.printStackTrace();
+		}
+
+		if(Arrays.equals(newPlainBytes, md.digest())) {
+			System.out.println("Signature is valid! Message accepted! :)");
+			} else {
+			System.out.println("Signature is invalid! Message rejected! :(");
+		}
+
+		if(previousCounter >= response.getSignature().getCounter()) {
+			return;
+		} else {
+			previousCounter = response.getSignature().getCounter();
+		}
+
 		// Print response.
 		System.out.println("Received response:");
 		System.out.println(response.toString());
@@ -89,5 +135,6 @@ public class SupplierClient {
 		// A Channel should be shutdown before stopping the process.
 		channel.shutdownNow();
 	}
+
 
 }

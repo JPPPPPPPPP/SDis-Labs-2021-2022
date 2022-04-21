@@ -2,6 +2,7 @@ package pt.tecnico.supplier;
 
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
+import com.google.protobuf.ByteString;
 import com.google.type.Money;
 
 import io.grpc.stub.StreamObserver;
@@ -13,13 +14,22 @@ import pt.tecnico.supplier.grpc.SupplierGrpc;
 import pt.tecnico.supplier.grpc.SignedResponse;
 import pt.tecnico.supplier.grpc.Signature;
 
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
 import java.io.InputStream;
+import javax.crypto.*;
+import java.security.*;
 
 public class SupplierServiceImpl extends SupplierGrpc.SupplierImplBase {
+
+	int counter = 0;
+	static String DIGEST_ALGO = "SHA-256";
+	static String MAC_ALGO = "HmacSHA256";
+	String SYM_ALGO = "AES";
+	String SYM_CIPHER = "AES/CBC/PKCS5Padding";
 
 	/**
 	 * Set flag to true to print debug messages. The flag can be set using the
@@ -93,15 +103,30 @@ public class SupplierServiceImpl extends SupplierGrpc.SupplierImplBase {
 
 		//Build signature
 		Signature.Builder sigBuilder = Signature.newBuilder();
+		SecretKeySpec keyspec = null;
+		byte[] cipherBytes = new byte[0];
+		try {
+			keyspec = readKey("."); //./secretkey if fucked
+			byte[] prodBytes = prodResponse.toByteArray();
+			MessageDigest md = MessageDigest.getInstance(DIGEST_ALGO);
+			md.update(prodBytes);
+			md.digest();
+			Cipher cipher = Cipher.getInstance(SYM_CIPHER);
+			cipher.init(Cipher.ENCRYPT_MODE, keyspec);
+			cipherBytes = cipher.doFinal(md.digest());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		sigBuilder.setValue(ByteString.copyFrom(cipherBytes));
 		sigBuilder.setSignerId(supplier.getId());
-		sigBuilder.setValue(readKey(".")); //./secretkey if fucked
+		sigBuilder.setCounter(counter);
 		Signature sig = sigBuilder.build();
 
 		//Build SignedResponse
 		SignedResponse.Builder signedResponseBuilder = SignedResponse.newBuilder();
 		signedResponseBuilder.setResponse(prodResponse);
 		signedResponseBuilder.setSignature(sig);
-		SignedResponse sigResponse = signedResponseBuilder.Build();
+		SignedResponse sigResponse = signedResponseBuilder.build();
 
 		//still refers to prodResponse
 		debug("Response to send:");
@@ -111,6 +136,8 @@ public class SupplierServiceImpl extends SupplierGrpc.SupplierImplBase {
 		debug(printHexBinary(responseBinary));
 		debug(String.format("%d bytes%n", responseBinary.length));
 
+		//aumentar counter de assinaturas
+		counter++;
 		// send single response back
 		responseObserver.onNext(sigResponse);
 		// complete call
